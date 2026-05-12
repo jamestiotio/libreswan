@@ -188,7 +188,8 @@ static void add_conn(struct starter_conn *conn,
 
 	int status = starter_whack_add_conn(ctlsocket, conn, logger,
 					    dry_run, async,
-					    noise);
+					    noise,
+					    /*check_message*/false);
 
 	/* don't loose existing status */
 	if (status != 0) {
@@ -452,6 +453,10 @@ int main(int argc, char *argv[])
 		if (verbose > 0)
 			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
 
+		if (!dry_run) {
+			starter_whack_autoall_start(ctlsocket, logger, noise);
+		}
+
 		struct starter_conn *conn = NULL;
 		TAILQ_FOREACH(conn, &cfg->conns, link) {
 			enum autostart autostart = conn_auto(conn);
@@ -477,7 +482,12 @@ int main(int argc, char *argv[])
 			}
 
 			starter_whack_add_conn(ctlsocket, conn, logger,
-					       dry_run, async, noise);
+					       dry_run, async, noise,
+					       /*check_message*/true);
+		}
+
+		if (!dry_run) {
+			starter_whack_autoall_stop(ctlsocket, logger, noise);
 		}
 
 		if (verbose > 0)
